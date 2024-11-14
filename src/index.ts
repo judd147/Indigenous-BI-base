@@ -16,7 +16,7 @@ app.get("/", (req, res) => {
 });
 
 // 注册 API 路由
-app.use('/api/procurement', procurementRoutes);
+app.use('/api', procurementRoutes);
 app.use('/api/insight', insightRoutes);
 
 // 监听端口并启动服务器

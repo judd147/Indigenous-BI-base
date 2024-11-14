@@ -21,7 +21,7 @@ const getProcurements = async (page: number, pageSize: number) => {
     .offset((page - 1) * pageSize);
 };
 
-router.get('/procurements', async (req, res) => {
+router.get('/procurement', async (req, res) => {
   const page = parseInt(req.query.page as string, 10) || 1;
   console.log("Parsed page:", page);
   const pageSize = parseInt(req.query.pageSize as string, 10) || 10;
