@@ -1,0 +1,64 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f7fafc;
+    color: #333;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    font-weight: bold;
+  }
+  
+  p {
+    margin: 0;
+  }
+
+  nav {
+    width: 16rem;
+    height: 100vh;
+    background-color: #2d3748; /* 深灰色背景 */
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+  }
+  nav img {
+    border-radius: 50%;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  th, td {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+  thead {
+    background-color: #f7fafc;
+  }
+  tbody tr:hover {
+    background-color: #f1f5f9;
+  }
+
+  /* 左侧导航栏 */
+nav {
+  background-color: #2d3748; /* 深灰背景 */
+  color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 主内容区域 */
+main {
+  background-color: #f7fafc; /* 浅灰背景 */
+  padding: 1rem;
+}
+
+/* 分隔线样式 */
+hr {
+  border: 0;
+  border-top: 1px solid #4a5568;
+}
