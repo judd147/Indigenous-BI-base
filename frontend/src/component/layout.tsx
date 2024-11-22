@@ -1,7 +1,5 @@
 import React from "react";
-import "../styles/globals.css"; // 全局样式
 import SideNav from "./side-nav"; // 左侧导航栏组件
-
 
 interface LayoutProps {
   children: React.ReactNode; // 用于接收动态内容
