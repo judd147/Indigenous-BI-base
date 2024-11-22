@@ -37,7 +37,7 @@ type Procurement = {
 
 router.get("/procurement", async (req, res) => {
   const page = parseInt(req.query.page as string, 10) || 1;
-  const limit = parseInt(req.query.pageSize as string, 10) || 10;
+  const limit = parseInt(req.query.limit as string, 10) || 10;
   const query = req.query.query as string;
   const sort = req.query.sort as string;
   const order = req.query.order as string;
@@ -70,7 +70,8 @@ router.get("/procurement", async (req, res) => {
       sort,
       order,
     })) as Procurement[];
-    res.status(200).json({ procurements });
+    console.log("success on server")
+    res.status(200).json(procurements);
   } catch (error) {
     console.error("Error fetching procurement data:", error);
     res.status(500).json({ error: "Failed to fetch procurement data" });
