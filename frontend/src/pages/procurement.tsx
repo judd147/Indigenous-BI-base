@@ -12,7 +12,6 @@ export default function ProcurementPage() {
     queryKey: ["procurements"],
     queryFn: async () => await fetch(`http://localhost:3002/api/procurement?page=${page}&limit=${limit}`).then(res => res.json()),
   });
-  console.log(data);
   const totalCount = data?.length ?? 0;
   return (
     <div className="container px-8 py-16">
@@ -21,8 +20,8 @@ export default function ProcurementPage() {
         <Suspense fallback={<DataTableSkeleton />}>
           <DataTable
             columns={columns}
-            data={data}
-            pageCount={Math.ceil(totalCount / limit)}
+            data={data || []}
+            pageCount={Math.ceil(totalCount / limit) || 1}
             pageIndex={page - 1}
             pageSize={limit}
           />

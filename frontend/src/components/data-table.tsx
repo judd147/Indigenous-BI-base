@@ -21,8 +21,8 @@ import { Button } from "@/components/ui/button";
 import { Pagination } from "./pagination";
 import { ColumnToggle } from "./column-toggle";
 import { FacetedFilter } from "./faceted-filter";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { X, ContainerIcon, HandHelping, Construction } from "lucide-react";
 
 interface DataTableProps<TData> {
@@ -40,11 +40,10 @@ export function DataTable<TData>({
   pageIndex,
   pageSize,
 }: DataTableProps<TData>) {
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  const { replace } = useRouter();
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
 
+  const location = useLocation();
+  const pathname = location.pathname;
+  let [searchParams, setSearchParams] = useSearchParams();
   const [sorting, setSorting] = React.useState<SortingState>(() => {
     const sort = searchParams.get("sort");
     const order = searchParams.get("order");
@@ -69,7 +68,7 @@ export function DataTable<TData>({
       params.set("sort", sorting[0].id);
       params.set("order", sorting[0].desc ? "desc" : "asc");
     }
-    replace(`${pathname}?${params.toString()}`);
+    setSearchParams(`${pathname}?${params.toString()}`);
   }, 300);
 
   const table = useReactTable({
@@ -113,7 +112,7 @@ export function DataTable<TData>({
         if (commodityType) {
           params.set("commodityType", commodityType);
         }
-        replace(`${pathname}?${params.toString()}`);
+        setSearchParams(`${pathname}?${params.toString()}`);
       }
     },
     onSortingChange: (updater) => {
@@ -138,7 +137,7 @@ export function DataTable<TData>({
       if (currentLimit) params.set("limit", currentLimit);
       if (currentQuery) params.set("query", currentQuery);
 
-      replace(`${pathname}?${params.toString()}`);
+      setSearchParams(`${pathname}?${params.toString()}`);
     },
   });
 
@@ -146,7 +145,7 @@ export function DataTable<TData>({
     const params = new URLSearchParams();
     const currentQuery = searchParams.get("query");
     if (currentQuery) params.set("query", currentQuery);
-    replace(`${pathname}?${params.toString()}`);
+    setSearchParams(`${pathname}?${params.toString()}`);
   };
 
   const handleFilterChange = (
@@ -162,7 +161,7 @@ export function DataTable<TData>({
       }
     }
     params.set("page", "1"); // Reset page
-    replace(`${pathname}?${params.toString()}`);
+    setSearchParams(`${pathname}?${params.toString()}`);
   };
 
   const isFiltered = table.getState().columnFilters.length > 0;
