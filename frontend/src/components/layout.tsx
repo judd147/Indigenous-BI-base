@@ -7,12 +7,12 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <div className="flex h-screen">
+    <div className="grid h-full grid-cols-[16rem_1fr]">
       {/* 左侧导航栏 */}
       <SideNav />
 
       {/* 主内容区域 */}
-      <main className="flex-1 p-4 overflow-y-auto bg-gray-100">
+      <main className="overflow-y-auto">
         {children}
       </main>
     </div>

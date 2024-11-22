@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Layout from './component/layout';
+import Layout from './components/layout';
 import HomePage from './pages/home';
 import ProcurementPage from './pages/procurement';
 import InsightPage from './pages/insight';
@@ -12,7 +12,7 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/procurement" element={<ProcurementPage />} />
+          <Route path="/federal-procurement" element={<ProcurementPage />} />
           <Route path="/insight" element={<InsightPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Routes>
