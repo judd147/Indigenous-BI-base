@@ -1,4 +1,4 @@
-// services/queries.ts
+import "server-only";
 import { db } from "./db";
 import {
   procurement,
@@ -12,117 +12,249 @@ import {
   topIBVendorSummary,
   topNonIBVendorSummary,
 } from "../schema";
-import { count, sum, eq, sql, ne, and, desc } from "drizzle-orm";
+import { count, sum, eq, sql, ne, and, desc, type SQL } from "drizzle-orm";
 
-const cached = true; // 是否使用缓存的数据表
+export async function getProcurementCount(searchCondition?: SQL<unknown>) {
+  // Count total records with search condition
+  const countResult = await db
+    .select({ count: count() })
+    .from(procurement)
+    .where(searchCondition);
 
-// 获取战略摘要
+  return countResult[0]?.count ?? 0;
+}
+
+export async function getProcurementData({
+  page,
+  limit,
+  searchCondition,
+  sort,
+  order,
+}: {
+  page: number;
+  limit: number;
+  searchCondition?: SQL<unknown>;
+  sort?: string;
+  order?: string;
+}) {
+  const offset = (page - 1) * limit;
+  const procurements = await db.query.procurement.findMany({
+    limit: limit,
+    offset: offset,
+    where: searchCondition,
+    orderBy: (procurement, { asc, desc }) => [
+      sort
+        ? order === "desc"
+          ? desc(procurement[sort as keyof typeof procurement])
+          : asc(procurement[sort as keyof typeof procurement])
+        : asc(procurement.id),
+    ],
+    with: {
+      vendor: {
+        columns: {
+          isIB: true,
+        },
+      },
+      solicitationProcedure: {
+        columns: {
+          procedure: true,
+        },
+      },
+      department: {
+        columns: {
+          name: true,
+        },
+      },
+      procurementStrategy: {
+        columns: {
+          strategy: true,
+        },
+      },
+      awardCriteria: {
+        columns: {
+          criteria: true,
+        },
+      },
+    },
+  });
+  return procurements;
+}
+
+const cached = false; // toggle to change the insight chart data source
+
 export async function getStrategySummary() {
-  return cached
+  const data = cached
     ? await db.select().from(strategySummary)
-    : await db.select({
-        category: procurementStrategy.strategy,
-        count: count(),
-        sum: sum(procurement.contract_value),
-      })
-      .from(procurement)
-      .innerJoin(procurementStrategy, eq(procurement.procurement_strategy_id, procurementStrategy.id))
-      .groupBy(procurementStrategy.strategy);
+    : await db
+        .select({
+          category: procurementStrategy.strategy,
+          count: count(),
+          sum: sum(procurement.contractValue).mapWith(
+            procurement.contractValue,
+          ),
+        })
+        .from(procurement)
+        .innerJoin(
+          procurementStrategy,
+          eq(procurement.procurementStrategyId, procurementStrategy.id),
+        )
+        .groupBy(procurementStrategy.strategy);
+  return data;
 }
 
-// 获取所有者摘要
 export async function getOwnerSummary() {
-  return cached
+  const data = cached
     ? await db.select().from(ownerSummary)
-    : await db.select({
-        category: sql<string>`CASE WHEN ${vendor.is_IB} THEN 'IB' ELSE 'non-IB' END`,
-        count: count(),
-        sum: sum(procurement.contract_value),
-      })
-      .from(procurement)
-      .innerJoin(vendor, eq(procurement.vendor_name, vendor.vendor_name))
-      .innerJoin(procurementStrategy, eq(procurement.procurement_strategy_id, procurementStrategy.id))
-      .where(ne(procurementStrategy.strategy, "None"))
-      .groupBy(vendor.is_IB);
+    : await db
+        .select({
+          category: sql<string>`CASE WHEN ${vendor.isIB} THEN 'IB' ELSE 'non-IB' END`,
+          count: count(),
+          sum: sum(procurement.contractValue).mapWith(
+            procurement.contractValue,
+          ),
+        })
+        .from(procurement)
+        .innerJoin(vendor, eq(procurement.vendorName, vendor.vendorName))
+        .innerJoin(
+          procurementStrategy,
+          eq(procurement.procurementStrategyId, procurementStrategy.id),
+        )
+        .where(ne(procurementStrategy.strategy, "None"))
+        .groupBy(vendor.isIB);
+  return data;
 }
 
-// 获取行业摘要
 export async function getIndustrySummary() {
-  return cached
+  const data = cached
     ? await db.select().from(industrySummary)
-    : await db.select({
-        category: sql<string>`CASE WHEN ${procurement.is_Tech} THEN 'Tech' ELSE 'non-Tech' END`,
-        count: count(),
-        sum: sum(procurement.contract_value),
-      })
-      .from(procurement)
-      .groupBy(procurement.is_Tech);
+    : await db
+        .select({
+          category: sql<string>`CASE WHEN ${procurement.isTech} THEN 'Tech' ELSE 'non-Tech' END`,
+          count: count(),
+          sum: sum(procurement.contractValue).mapWith(
+            procurement.contractValue,
+          ),
+        })
+        .from(procurement)
+        .groupBy(procurement.isTech);
+  return data;
 }
 
-// 获取战略行业摘要
 export async function getStrategyIndustrySummary() {
-  return cached
+  const data = cached
     ? await db.select().from(strategyIndustrySummary)
-    : await db.select({
-        category: sql<string>`CASE WHEN ${procurementStrategy.strategy} = 'None' THEN 'None' ELSE 'PSIB/PSAB' END`,
-        Tech_count: count(sql`CASE WHEN ${procurement.is_Tech} THEN 1 END`),
-        non_Tech_count: count(sql`CASE WHEN NOT ${procurement.is_Tech} THEN 1 END`),
-        Tech_sum: sum(sql`CASE WHEN ${procurement.is_Tech} THEN ${procurement.contract_value} END`),
-        non_Tech_sum: sum(sql`CASE WHEN NOT ${procurement.is_Tech} THEN ${procurement.contract_value} END`),
-      })
-      .from(procurement)
-      .innerJoin(procurementStrategy, eq(procurement.procurement_strategy_id, procurementStrategy.id))
-      .groupBy(sql<string>`CASE WHEN ${procurementStrategy.strategy} = 'None' THEN 'None' ELSE 'PSIB/PSAB' END`);
+    : await db
+        .select({
+          category: sql<string>`CASE WHEN ${procurementStrategy.strategy} = 'None' THEN 'None' ELSE 'PSIB/PSAB' END`,
+          Tech_count: count(sql`CASE WHEN ${procurement.isTech} THEN 1 END`),
+          "non-Tech_count": count(
+            sql`CASE WHEN NOT ${procurement.isTech} THEN 1 END`,
+          ),
+          Tech_sum: sum(
+            sql`CASE WHEN ${procurement.isTech} THEN ${procurement.contractValue} END`,
+          ).mapWith(procurement.contractValue),
+          "non-Tech_sum": sum(
+            sql`CASE WHEN NOT ${procurement.isTech} THEN ${procurement.contractValue} END`,
+          ).mapWith(procurement.contractValue),
+        })
+        .from(procurement)
+        .innerJoin(
+          procurementStrategy,
+          eq(procurement.procurementStrategyId, procurementStrategy.id),
+        )
+        .groupBy(
+          sql<string>`CASE WHEN ${procurementStrategy.strategy} = 'None' THEN 'None' ELSE 'PSIB/PSAB' END`,
+        );
+  return data;
 }
 
-// 获取所有者行业摘要
 export async function getOwnerIndustrySummary() {
-  return cached
+  const data = cached
     ? await db.select().from(ownerIndustrySummary)
-    : await db.select({
-        category: sql<string>`CASE WHEN ${vendor.is_IB} THEN 'IB' ELSE 'non-IB' END`,
-        Tech_count: count(sql`CASE WHEN ${procurement.is_Tech} THEN 1 END`),
-        non_Tech_count: count(sql`CASE WHEN NOT ${procurement.is_Tech} THEN 1 END`),
-        Tech_sum: sum(sql`CASE WHEN ${procurement.is_Tech} THEN ${procurement.contract_value} END`),
-        non_Tech_sum: sum(sql`CASE WHEN NOT ${procurement.is_Tech} THEN ${procurement.contract_value} END`),
-      })
-      .from(procurement)
-      .innerJoin(vendor, eq(procurement.vendor_name, vendor.vendor_name))
-      .innerJoin(procurementStrategy, eq(procurement.procurement_strategy_id, procurementStrategy.id))
-      .where(ne(procurementStrategy.strategy, "None"))
-      .groupBy(sql<string>`CASE WHEN ${vendor.is_IB} THEN 'IB' ELSE 'non-IB' END`);
+    : await db
+        .select({
+          category: sql<string>`CASE WHEN ${vendor.isIB} THEN 'IB' ELSE 'non-IB' END`,
+          Tech_count: count(sql`CASE WHEN ${procurement.isTech} THEN 1 END`),
+          "non-Tech_count": count(
+            sql`CASE WHEN NOT ${procurement.isTech} THEN 1 END`,
+          ),
+          Tech_sum: sum(
+            sql`CASE WHEN ${procurement.isTech} THEN ${procurement.contractValue} END`,
+          ).mapWith(procurement.contractValue),
+          "non-Tech_sum": sum(
+            sql`CASE WHEN NOT ${procurement.isTech} THEN ${procurement.contractValue} END`,
+          ).mapWith(procurement.contractValue),
+        })
+        .from(procurement)
+        .innerJoin(vendor, eq(procurement.vendorName, vendor.vendorName))
+        .innerJoin(
+          procurementStrategy,
+          eq(procurement.procurementStrategyId, procurementStrategy.id),
+        )
+        .where(ne(procurementStrategy.strategy, "None"))
+        .groupBy(
+          sql<string>`CASE WHEN ${vendor.isIB} THEN 'IB' ELSE 'non-IB' END`,
+        );
+  return data;
 }
 
-// 获取前10个IB供应商摘要
 export async function getTopIBVendorSummary() {
-  return cached
+  const data = cached
     ? await db.select().from(topIBVendorSummary)
-    : await db.select({
-        category: vendor.vendor_name,
-        sum: sum(procurement.contract_value),
-      })
-      .from(procurement)
-      .innerJoin(vendor, eq(procurement.vendor_name, vendor.vendor_name))
-      .innerJoin(procurementStrategy, eq(procurement.procurement_strategy_id, procurementStrategy.id))
-      .where(and(ne(procurementStrategy.strategy, "None"), eq(vendor.is_IB, true)))
-      .groupBy(vendor.vendor_name)
-      .orderBy(desc(sum(procurement.contract_value)))
-      .limit(10);
+    : await db
+        .select({
+          category: vendor.vendorName,
+          sum: sum(procurement.contractValue).mapWith(
+            procurement.contractValue,
+          ),
+        })
+        .from(procurement)
+        .innerJoin(vendor, eq(procurement.vendorName, vendor.vendorName))
+        .innerJoin(
+          procurementStrategy,
+          eq(procurement.procurementStrategyId, procurementStrategy.id),
+        )
+        .where(
+          and(ne(procurementStrategy.strategy, "None"), eq(vendor.isIB, true)),
+        )
+        .groupBy(vendor.vendorName)
+        .orderBy(
+          desc(
+            sum(procurement.contractValue).mapWith(procurement.contractValue),
+          ),
+        )
+        .limit(10);
+  return data;
 }
 
-// 获取前10个非IB供应商摘要
 export async function getTopNonIBVendorSummary() {
-  return cached
+  const data = cached
     ? await db.select().from(topNonIBVendorSummary)
-    : await db.select({
-        category: vendor.vendor_name,
-        sum: sum(procurement.contract_value),
-      })
-      .from(procurement)
-      .innerJoin(vendor, eq(procurement.vendor_name, vendor.vendor_name))
-      .innerJoin(procurementStrategy, eq(procurement.procurement_strategy_id, procurementStrategy.id))
-      .where(and(ne(procurementStrategy.strategy, "None"), eq(vendor.is_IB, false)))
-      .groupBy(vendor.vendor_name)
-      .orderBy(desc(sum(procurement.contract_value)))
-      .limit(10);
+    : await db
+        .select({
+          category: vendor.vendorName,
+          sum: sum(procurement.contractValue).mapWith(
+            procurement.contractValue,
+          ),
+        })
+        .from(procurement)
+        .innerJoin(vendor, eq(procurement.vendorName, vendor.vendorName))
+        .innerJoin(
+          procurementStrategy,
+          eq(procurement.procurementStrategyId, procurementStrategy.id),
+        )
+        .where(
+          and(
+            ne(procurementStrategy.strategy, "None"),
+            eq(vendor.isIB, false),
+          ),
+        )
+        .groupBy(vendor.vendorName)
+        .orderBy(
+          desc(
+            sum(procurement.contractValue).mapWith(procurement.contractValue),
+          ),
+        )
+        .limit(10);
+  return data;
 }

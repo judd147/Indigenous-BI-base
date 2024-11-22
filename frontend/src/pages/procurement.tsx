@@ -1,39 +1,30 @@
 import { Suspense } from "react";
+import { DataTable } from "../components/data-table";
 import { DataTableSkeleton } from "../components/skeleton";
-import ProcurementData from "./procurement-data";
+import { columns } from "../components/columns";
+import { useQuery } from "@tanstack/react-query";
 
-interface PageProps {
-  searchParams?: Promise<{
-    page?: string;
-    limit?: string;
-    query?: string;
-    sort?: string;
-    order?: string;
-    commodityType?: string;
-  }>;
-}
+export default function ProcurementPage() {
+  const page = 1;
+  const limit = 10;
 
-export default async function ProcurementPage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const page = Number(params?.page) || 1;
-  const limit = Number(params?.limit) || 10;
-  const query = params?.query?.trim();
-  const sort = params?.sort;
-  const order = params?.order;
-  const commodityType = params?.commodityType;
-
+  const { data } = useQuery({
+    queryKey: ["procurements"],
+    queryFn: async () => await fetch(`http://localhost:3002/api/procurement?page=${page}&limit=${limit}`).then(res => res.json()),
+  });
+  console.log(data);
+  const totalCount = data?.length ?? 0;
   return (
     <div className="container px-8 py-16">
       <p className="text-4xl font-bold">Federal Procurement</p>
       <div className="container mx-auto py-10">
         <Suspense fallback={<DataTableSkeleton />}>
-          <ProcurementData
-            page={page}
-            limit={limit}
-            query={query}
-            sort={sort}
-            order={order}
-            commodityType={commodityType}
+          <DataTable
+            columns={columns}
+            data={data}
+            pageCount={Math.ceil(totalCount / limit)}
+            pageIndex={page - 1}
+            pageSize={limit}
           />
         </Suspense>
       </div>

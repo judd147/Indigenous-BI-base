@@ -2,6 +2,7 @@
 import { drizzle } from 'drizzle-orm/node-postgres'; // 使用 node-postgres 适配器
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import * as schema from "../schema";
 
 // 加载环境变量
 dotenv.config();
@@ -17,4 +18,4 @@ const pool = new Pool({
 });
 
 // 使用 drizzle 连接 pg 的 pool
-export const db = drizzle(pool);
+export const db = drizzle(pool, { schema });
