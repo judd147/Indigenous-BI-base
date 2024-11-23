@@ -63,6 +63,7 @@ router.get("/procurement", async (req, res) => {
   const searchCondition = and(commodityTypeCondition, queryCondition);
 
   try {
+    const totalCount = await getProcurementCount(searchCondition);
     const procurements = (await getProcurementData({
       page,
       limit,
@@ -70,8 +71,8 @@ router.get("/procurement", async (req, res) => {
       sort,
       order,
     })) as Procurement[];
-    console.log("success on server")
-    res.status(200).json(procurements);
+    console.log(totalCount);
+    res.status(200).json([procurements, totalCount]);
   } catch (error) {
     console.error("Error fetching procurement data:", error);
     res.status(500).json({ error: "Failed to fetch procurement data" });

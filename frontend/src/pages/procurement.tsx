@@ -3,16 +3,33 @@ import { DataTable } from "../components/data-table";
 import { DataTableSkeleton } from "../components/skeleton";
 import { columns } from "../components/columns";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 
 export default function ProcurementPage() {
-  const page = 1;
-  const limit = 10;
+  const [searchParams] = useSearchParams();
+  const page = parseInt(searchParams.get("page") || "1", 10);
+  const limit = parseInt(searchParams.get("limit") || "10", 10);
+  const query = searchParams.get("query") || "";
+  const sort = searchParams.get("sort") || "";
+  const order = searchParams.get("order") || "";
+  const commodityType = searchParams.get("commodityType") || "";
 
-  const { data } = useQuery({
-    queryKey: ["procurements"],
-    queryFn: async () => await fetch(`http://localhost:3002/api/procurement?page=${page}&limit=${limit}`).then(res => res.json()),
+  const fetchProcurements = async () => {
+    const response = await fetch(
+      `http://localhost:3002/api/procurement?page=${page}&limit=${limit}&query=${query}&sort=${sort}&order=${order}&commodityType=${commodityType}`
+    );
+    return response.json();
+  };
+
+  const { data: procurements = [[], 0] } = useQuery({
+    queryKey: ["procurements", page, limit, query, sort, order, commodityType],
+    queryFn: fetchProcurements,
+    placeholderData: (prev) => prev
   });
-  const totalCount = data?.length ?? 0;
+
+  // Destructure the array response
+  const [procurementData, totalCount] = procurements;
+
   return (
     <div className="container px-8 py-16">
       <p className="text-4xl font-bold">Federal Procurement</p>
@@ -20,7 +37,7 @@ export default function ProcurementPage() {
         <Suspense fallback={<DataTableSkeleton />}>
           <DataTable
             columns={columns}
-            data={data || []}
+            data={procurementData}
             pageCount={Math.ceil(totalCount / limit) || 1}
             pageIndex={page - 1}
             pageSize={limit}
