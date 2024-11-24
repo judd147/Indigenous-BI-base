@@ -1,10 +1,10 @@
-const ProfilePage = () => {
-    return (
-      <div>
-        <h1 className="text-2xl font-bold">Profile Page</h1>
-        <p>Welcome to the Profile page. Manage your profile here.</p>
-      </div>
-    );
-  };
-  
-  export default ProfilePage;
+import { ProfileForm } from "../components/form"
+
+export default function ProfilePage() {
+  return (
+    <div className="container px-8 py-16">
+      <p className="text-4xl font-bold">Profile</p>
+      <ProfileForm />
+    </div>
+  );
+}
