@@ -71,7 +71,6 @@ router.get("/procurement", async (req, res) => {
       sort,
       order,
     })) as Procurement[];
-    console.log(totalCount);
     res.status(200).json([procurements, totalCount]);
   } catch (error) {
     console.error("Error fetching procurement data:", error);

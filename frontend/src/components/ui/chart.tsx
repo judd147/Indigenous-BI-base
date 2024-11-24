@@ -2,8 +2,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
-"use client"
-
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 

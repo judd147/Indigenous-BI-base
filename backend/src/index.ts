@@ -21,7 +21,7 @@ app.get("/", (req, res) => {
 
 // 注册 API 路由
 app.use('/api', procurementRoutes);
-app.use('/api/insight', insightRoutes);
+app.use('/api', insightRoutes);
 
 // 监听端口并启动服务器
 const PORT = process.env.PORT || 3002;
