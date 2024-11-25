@@ -16,7 +16,7 @@ export default function ProcurementPage() {
 
   const fetchProcurements = async () => {
     const response = await fetch(
-      `http://localhost:3002/api/procurement?page=${page}&limit=${limit}&query=${query}&sort=${sort}&order=${order}&commodityType=${commodityType}`
+      `https://indigenous-bi-base.onrender.com/api/procurement?page=${page}&limit=${limit}&query=${query}&sort=${sort}&order=${order}&commodityType=${commodityType}`
     );
     return response.json();
   };

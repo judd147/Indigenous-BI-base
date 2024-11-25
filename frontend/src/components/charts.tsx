@@ -58,7 +58,7 @@ export default function Charts() {
   } satisfies ChartConfig;
 
   const fetchInsights = async () => {
-    const response = await fetch(`http://localhost:3002/api/insight`);
+    const response = await fetch(`https://indigenous-bi-base.onrender.com/api/insight`);
     return response.json();
   };
 
