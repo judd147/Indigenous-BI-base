@@ -86,7 +86,6 @@ export default function Charts() {
     chartData11,
     chartData12,
   ] = insights;
-  console.log(chartData2);
 
   return (
     <div className="container mx-auto grid grid-cols-1 gap-4 py-10 sm:grid-cols-2 lg:grid-cols-3">
