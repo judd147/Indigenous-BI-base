@@ -3,6 +3,7 @@ import { StackedBarChart } from "./stacked-bar-chart";
 import { HorizontalBarChart } from "./horizontal-bar-chart";
 import { type ChartConfig } from "@/components/ui/chart";
 import { CircleAlert } from "lucide-react";
+import { InsightSkeleton } from "./skeleton";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Charts() {
@@ -58,11 +59,21 @@ export default function Charts() {
   } satisfies ChartConfig;
 
   const fetchInsights = async () => {
-    const response = await fetch(`https://indigenous-bi-base.onrender.com/api/insight`);
+    const response = await fetch(
+      `https://indigenous-bi-base.onrender.com/api/insight`
+    );
+    if (!response.ok) {
+      throw new Error("Failed to fetch insights");
+    }
     return response.json();
   };
 
-  const { data: insights = [] } = useQuery({
+  const {
+    data: insights = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["insights"],
     queryFn: fetchInsights,
   });
@@ -86,6 +97,10 @@ export default function Charts() {
     chartData11,
     chartData12,
   ] = insights;
+
+  if (isLoading) {
+    return <InsightSkeleton />;
+  }
 
   return (
     <div className="container mx-auto grid grid-cols-1 gap-4 py-10 sm:grid-cols-2 lg:grid-cols-3">

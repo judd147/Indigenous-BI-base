@@ -18,10 +18,15 @@ export default function ProcurementPage() {
     const response = await fetch(
       `https://indigenous-bi-base.onrender.com/api/procurement?page=${page}&limit=${limit}&query=${query}&sort=${sort}&order=${order}&commodityType=${commodityType}`
     );
+    if (!response.ok) {
+      throw new Error("Failed to fetch procurements");
+    }
     return response.json();
   };
 
-  const { data: procurements = [[], 0] } = useQuery({
+  const { data: procurements = [[], 0], isLoading,
+    isError,
+    error, } = useQuery({
     queryKey: ["procurements", page, limit, query, sort, order, commodityType],
     queryFn: fetchProcurements,
     placeholderData: (prev) => prev
@@ -29,6 +34,28 @@ export default function ProcurementPage() {
 
   // Destructure the array response
   const [procurementData, totalCount] = procurements;
+
+  if (isLoading) {
+    return (
+      <div className="container px-8 py-16">
+        <p className="text-4xl font-bold">Federal Procurement</p>
+        <div className="container mx-auto py-10">
+          <DataTableSkeleton />
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="container px-8 py-16">
+        <p className="text-4xl font-bold">Federal Procurement</p>
+        <div className="container mx-auto py-10">
+          <p className="text-red-500">Error: {error.message}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container px-8 py-16">
